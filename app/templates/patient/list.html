@@ -35,12 +35,12 @@
       <tbody>
         {% for p in patients %}
         <tr>
-          <td class="mono">{{ p.patient_id }}</td>
-          <td class="muted">{{ p.age_band }}</td>
-          <td class="muted">{{ p.gender }}</td>
-          <td>{% if p.assigned_doctor_name %}{{ p.assigned_doctor_name }}{% else %}{{ ui.badge('Unassigned') }}{% endif %}</td>
-          <td class="muted nowrap">{{ ui.when(p.created_at) }}</td>
-          <td class="end"><span class="row-actions">
+          <td class="mono" data-label="MRN">{{ p.patient_id }}</td>
+          <td class="muted" data-label="Age band">{{ p.age_band }}</td>
+          <td class="muted" data-label="Gender">{{ p.gender }}</td>
+          <td data-label="Attending doctor">{% if p.assigned_doctor_name %}{{ p.assigned_doctor_name }}{% else %}{{ ui.badge('Unassigned') }}{% endif %}</td>
+          <td class="muted nowrap" data-label="Registered">{{ ui.when(p.created_at) }}</td>
+          <td class="end mobile-card-action"><span class="row-actions">
             <a href="{{ url_for('patient.detail_patient', record_id=p.id) }}">View</a>
           </span></td>
         </tr>

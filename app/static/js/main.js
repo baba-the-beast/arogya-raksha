@@ -2,6 +2,26 @@
  * ArogyaRaksha client behaviour. No build step, no dependencies; loaded with the CSP nonce.
  */
 document.addEventListener("DOMContentLoaded", () => {
+  // Theme preference contains no clinical or identity data and is safe to persist locally.
+  document.querySelectorAll("[data-theme-toggle]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+      document.documentElement.dataset.theme = next;
+      localStorage.setItem("ar-theme", next);
+      button.setAttribute("aria-label", `Switch to ${next === "dark" ? "light" : "dark"} theme`);
+    });
+  });
+
+  // Give immediate, unambiguous feedback while forms are submitted.
+  document.querySelectorAll("form").forEach((form) => {
+    form.addEventListener("submit", () => {
+      const submitter = form.querySelector('button[type="submit"]');
+      if (!submitter || submitter.dataset.noLoading !== undefined) return;
+      submitter.setAttribute("aria-busy", "true");
+      submitter.classList.add("is-loading");
+    });
+  });
+
   // Mobile navigation drawer
   const toggle = document.getElementById("menu-toggle");
   const sidebar = document.getElementById("app-sidebar");

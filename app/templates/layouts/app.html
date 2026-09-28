@@ -44,6 +44,7 @@
         {% block breadcrumb %}<span aria-current="page">{{ self.title() }}</span>{% endblock %}
       </div>
       <div class="user-box">
+        <button class="btn btn-ghost btn-sm theme-toggle" type="button" data-theme-toggle aria-label="Switch color theme" title="Switch color theme">{{ ui.icon('sun') }}<span class="theme-label">Theme</span></button>
         {{ ui.avatar(current_user.username) }}
         <div class="user-meta">
           <strong>{{ current_user.username }}</strong>

@@ -2,15 +2,27 @@
 {% import "_ui.html" as ui %}
 
 {% block body %}
-<main id="main-content" class="auth">
-  <div class="card auth-card">
-    <a class="brand" href="{{ url_for('auth.login') }}">
+<main id="main-content" class="auth-shell">
+  <section class="auth-context" aria-label="About ArogyaRaksha">
+    <a class="brand auth-brand" href="{{ url_for('auth.login') }}">
       <span class="brand-mark" aria-hidden="true">AR</span>
-      <span class="brand-name">ArogyaRaksha</span>
+      <span><span class="brand-name">ArogyaRaksha</span><span class="brand-org">Secure clinical operations</span></span>
     </a>
-    {{ ui.flashes() }}
-    {% block card %}{% endblock %}
-  </div>
-  {% block below %}{% endblock %}
+    <div class="auth-context-copy">
+      <span class="eyebrow">AUTHORIZED CLINICAL ACCESS</span>
+      <h1>Protected care.<br>Accountable access.</h1>
+      <p>A secure workspace for clinical records, care coordination, and verifiable healthcare operations.</p>
+    </div>
+    <div class="auth-assurance">{{ ui.icon('shield') }}<span><strong>Enterprise protection</strong><small>Encrypted records · Audited access · Automatic session security</small></span></div>
+  </section>
+  <section class="auth-panel">
+    <button class="btn btn-ghost btn-sm auth-theme theme-toggle" type="button" data-theme-toggle aria-label="Switch color theme">{{ ui.icon('sun') }} Theme</button>
+    <div class="card auth-card">
+      <a class="brand auth-card-brand" href="{{ url_for('auth.login') }}"><span class="brand-mark" aria-hidden="true">AR</span><span class="brand-name">ArogyaRaksha</span></a>
+      {{ ui.flashes() }}
+      {% block card %}{% endblock %}
+    </div>
+    {% block below %}{% endblock %}
+  </section>
 </main>
 {% endblock %}
