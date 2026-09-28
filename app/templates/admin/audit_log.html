@@ -51,19 +51,19 @@
 
   {% if logs %}
   <div class="table-wrap">
-    <table class="table">
+    <table class="table responsive-table audit-table">
       <thead><tr><th class="num">#</th><th>Time (UTC)</th><th>Event</th><th>User</th><th>Resource</th><th>Status</th><th>IP</th><th>Details</th></tr></thead>
       <tbody>
         {% for log in logs %}
         <tr>
-          <td class="num mono subtle">{{ log.id }}</td>
-          <td class="muted nowrap">{{ log.timestamp.strftime('%d %b %Y, %H:%M:%S') if log.timestamp else '—' }}</td>
-          <td class="mono">{{ log.action }}</td>
-          <td>{{ log.username or '—' }}</td>
-          <td class="muted">{% if log.resource_type %}{{ log.resource_type | lower }}{% if log.resource_id %} <span class="mono">{{ log.resource_id }}</span>{% endif %}{% else %}—{% endif %}</td>
-          <td>{{ status_badge(log.status) }}</td>
-          <td class="mono subtle">{{ log.ip_address or '—' }}</td>
-          <td class="t-small muted">{{ log.details or '' }}</td>
+          <td data-label="Event ID" class="num mono subtle">{{ log.id }}</td>
+          <td data-label="Time (UTC)" class="muted nowrap">{{ log.timestamp.strftime('%d %b %Y, %H:%M:%S') if log.timestamp else '—' }}</td>
+          <td data-label="Event" class="mono">{{ log.action }}</td>
+          <td data-label="Actor">{{ log.username or '—' }}</td>
+          <td data-label="Resource" class="muted">{% if log.resource_type %}{{ log.resource_type | lower }}{% if log.resource_id %} <span class="mono">{{ log.resource_id }}</span>{% endif %}{% else %}—{% endif %}</td>
+          <td data-label="Outcome">{{ status_badge(log.status) }}</td>
+          <td data-label="Source IP" class="mono subtle">{{ log.ip_address or '—' }}</td>
+          <td data-label="Details" class="t-small muted">{{ log.details or '' }}</td>
         </tr>
         {% endfor %}
       </tbody>

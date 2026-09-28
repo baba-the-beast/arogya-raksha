@@ -22,6 +22,26 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  // Warn before clinical drafts are accidentally lost. The browser owns the warning copy
+  // and no form values are copied to storage or telemetry.
+  document.querySelectorAll("form[data-dirty-guard]").forEach((form) => {
+    let dirty = false;
+    let submitting = false;
+    form.addEventListener("input", () => { dirty = true; });
+    form.addEventListener("change", () => { dirty = true; });
+    form.addEventListener("submit", () => { submitting = true; });
+    window.addEventListener("beforeunload", (event) => {
+      if (!dirty || submitting) return;
+      event.preventDefault();
+      event.returnValue = "";
+    });
+    form.querySelectorAll("a").forEach((link) => {
+      link.addEventListener("click", (event) => {
+        if (dirty && !window.confirm("Discard your unsaved changes?")) event.preventDefault();
+      });
+    });
+  });
+
   // Mobile navigation drawer
   const toggle = document.getElementById("menu-toggle");
   const sidebar = document.getElementById("app-sidebar");

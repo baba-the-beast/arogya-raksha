@@ -218,6 +218,8 @@ code, .mono { font-family: var(--font-mono); font-size: 13px; line-height: 18px;
 .breadcrumb [aria-current="page"] { color: var(--color-text-primary); }
 .breadcrumb .sep { color: var(--color-border-strong); }
 .user-box { display: flex; align-items: center; gap: 10px; }
+.session-security { display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border-radius: 999px; background: var(--color-bg-success-subtle); color: var(--color-text-success); font-size: 12px; font-weight: 600; white-space: nowrap; }
+.session-security .icon { width: 14px; height: 14px; }
 .user-meta { display: flex; flex-direction: column; line-height: 18px; }
 .user-meta strong { font-weight: 500; }
 .user-meta span { font-size: 13px; color: var(--color-text-tertiary); }
@@ -474,6 +476,11 @@ code, .mono { font-family: var(--font-mono); font-size: 13px; line-height: 18px;
 /* ── Error pages ────────────────────────────────────────────────────────── */
 .error-card { width: 440px; max-width: 100%; padding: var(--space-8); display: flex; flex-direction: column; gap: var(--space-3); }
 .error-code { font-family: var(--font-mono); font-size: 13px; color: var(--color-text-tertiary); }
+.error-icon { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px; background: var(--color-bg-warning-subtle); color: var(--color-text-warning); }
+.error-icon .icon { width: 22px; height: 22px; }
+.request-id { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border: 1px solid var(--color-border-default); border-radius: 6px; background: var(--color-bg-subtle); }
+.request-id span { color: var(--color-text-tertiary); font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+.request-id code { overflow-wrap: anywhere; }
 
 /* ── Responsive ─────────────────────────────────────────────────────────── */
 @media (max-width: 1100px) {
@@ -496,6 +503,8 @@ code, .mono { font-family: var(--font-mono); font-size: 13px; line-height: 18px;
   .stats { grid-template-columns: minmax(0, 1fr); }
   .form-grid { grid-template-columns: minmax(0, 1fr); }
   .user-meta, .vr { display: none; }
+  .session-security span { display: none; }
+  .session-security { padding: 7px; }
   .filters .input-group { width: 100%; }
   .theme-label { display: none; }
 }
@@ -517,6 +526,19 @@ code, .mono { font-family: var(--font-mono); font-size: 13px; line-height: 18px;
   #patient-table .mobile-card-action { grid-column: 1 / -1; }
   #patient-table .mobile-card-action::before { display: none; }
   #patient-table .mobile-card-action a { display: flex; min-height: 40px; align-items: center; justify-content: center; border-radius: 6px; background: var(--color-bg-accent-subtle); font-weight: 600; }
+  .responsive-table thead { display: none; }
+  .responsive-table, .responsive-table tbody { display: block; }
+  .responsive-table tr { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; margin: 12px; padding: 16px; border: 1px solid var(--color-border-default); border-radius: 10px; background: var(--color-bg-surface); box-shadow: var(--shadow-sm); }
+  .responsive-table td { display: flex; min-width: 0; flex-direction: column; align-items: flex-start; gap: 3px; padding: 0; border: 0; text-align: left; white-space: normal; overflow-wrap: anywhere; }
+  .responsive-table td::before { content: attr(data-label); color: var(--color-text-tertiary); font-family: var(--font-sans); font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+  .responsive-table td:first-child { grid-column: 1 / -1; }
+  .responsive-table .mobile-card-action { grid-column: 1 / -1; }
+  .responsive-table .mobile-card-action::before { display: none; }
+  .responsive-table .mobile-card-action form, .responsive-table .mobile-card-action button { width: 100%; min-height: 40px; }
+  .audit-table td:nth-child(3), .audit-table td:last-child { grid-column: 1 / -1; }
+  .filters { align-items: stretch; }
+  .filters .select, .filters > .input { width: 100%; }
+  .filters > .subtle { display: none; }
   .card-footer { align-items: stretch; flex-direction: column; }
   .pager { justify-content: space-between; }
   .pager .page-num, .pager > .subtle { display: none; }

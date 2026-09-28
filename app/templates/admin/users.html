@@ -9,18 +9,18 @@
 <div class="columns">
   <section class="card" aria-label="User accounts">
     <div class="table-wrap">
-      <table class="table">
+      <table class="table responsive-table">
         <thead><tr><th>User</th><th>Role</th><th>Email</th><th>2FA</th><th>Status</th><th>Last sign-in</th><th class="end"><span class="visually-hidden">Actions</span></th></tr></thead>
         <tbody>
           {% for u in users %}
           <tr>
-            <td><span class="cell-user">{{ ui.avatar(u.username) }}{{ u.username }}</span></td>
-            <td>{{ ui.role_badge(u.role) }}</td>
-            <td class="{{ 'muted' if u.email else 'subtle' }}">{{ u.email or '—' }}</td>
-            <td>{{ ui.badge('On', 'success') if u.totp_enabled else ui.badge('Off') }}</td>
-            <td>{{ ui.badge('Active', 'success') if u.is_active else ui.badge('Disabled') }}</td>
-            <td class="muted nowrap">{{ ui.when(u.last_login_at) if u.last_login_at else 'Never' }}</td>
-            <td class="end">
+            <td data-label="User"><span class="cell-user">{{ ui.avatar(u.username) }}{{ u.username }}</span></td>
+            <td data-label="Role">{{ ui.role_badge(u.role) }}</td>
+            <td data-label="Email" class="{{ 'muted' if u.email else 'subtle' }}">{{ u.email or '—' }}</td>
+            <td data-label="Two-factor">{{ ui.badge('On', 'success') if u.totp_enabled else ui.badge('Off', 'warning') }}</td>
+            <td data-label="Status">{{ ui.badge('Active', 'success') if u.is_active else ui.badge('Suspended', 'danger') }}</td>
+            <td data-label="Last sign-in" class="muted nowrap">{{ ui.when(u.last_login_at) if u.last_login_at else 'Never' }}</td>
+            <td class="end mobile-card-action">
               {% if u.id == user.id %}
               <span class="t-small subtle">You</span>
               {% else %}

@@ -18,7 +18,7 @@
 </div>
 {% endif %}
 
-<form action="{{ url_for('patient.edit_patient', record_id=patient.id) }}" method="POST" class="form-stack" novalidate>
+<form action="{{ url_for('patient.edit_patient', record_id=patient.id) }}" method="POST" class="form-stack" data-dirty-guard novalidate>
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <input type="hidden" name="version_id" value="{{ patient.version_id }}">
   {% if break_glass_reason %}<input type="hidden" name="break_glass_reason" value="{{ break_glass_reason }}">{% endif %}

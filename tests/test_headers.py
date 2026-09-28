@@ -78,3 +78,17 @@ def test_template_renders_script_nonce(client):
     assert login_resp.status_code == 200
     content = login_resp.data.decode()
     assert "nonce=" in content
+
+
+def test_operational_errors_include_safe_request_id(client):
+    """Error pages provide a support identifier without exposing implementation details."""
+    response = client.get("/route-that-does-not-exist")
+    assert response.status_code == 404
+    assert b"Request ID" in response.data
+    assert response.headers["X-Request-ID"].encode() in response.data
+
+
+def test_json_errors_include_request_id(client):
+    response = client.get("/api/route-that-does-not-exist", headers={"Accept": "application/json"})
+    assert response.status_code == 404
+    assert response.json["request_id"] == response.headers["X-Request-ID"]

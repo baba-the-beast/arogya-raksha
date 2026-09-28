@@ -8,7 +8,7 @@
 {% block content %}
 {{ ui.page_header('Register patient', 'The MRN, age band and gender are stored in the clear for search. Everything under Clinical information is encrypted.') }}
 
-<form action="{{ url_for('patient.create_patient') }}" method="POST" class="form-stack" novalidate>
+<form action="{{ url_for('patient.create_patient') }}" method="POST" class="form-stack" data-dirty-guard novalidate>
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
   <section class="card" aria-labelledby="identification">

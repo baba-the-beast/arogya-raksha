@@ -1,14 +1,18 @@
 {% extends "layouts/app.html" if current_user else "layouts/auth.html" %}
+{% import "_ui.html" as ui %}
 {# Shared error page. Child templates set `heading`; the route supplies status_code, error_name and message. #}
 {% block title %}{{ heading }}{% endblock %}
 
 {% macro error_body() %}
+<div class="error-icon" aria-hidden="true">{{ ui.icon('alert') }}</div>
 <p class="error-code">Error {{ status_code }} · {{ error_name }}</p>
 <h1 class="t-page">{{ heading }}</h1>
 <p class="muted">{{ message }}</p>
+{% if request_id %}<p class="request-id"><span>Request ID</span><code>{{ request_id }}</code></p>{% endif %}
 <div class="actions">
+  {% if request.method == 'GET' and status_code in (429, 500) %}<a class="btn btn-secondary" href="{{ request.url }}">Try again</a>{% endif %}
   {% if current_user %}
-  <a class="btn btn-primary" href="{{ url_for('patient.dashboard') }}">Go to Home</a>
+  <a class="btn btn-primary" href="{{ url_for('patient.dashboard') }}">Go to dashboard</a>
   {% else %}
   <a class="btn btn-primary" href="{{ url_for('auth.login') }}">Sign in</a>
   {% endif %}

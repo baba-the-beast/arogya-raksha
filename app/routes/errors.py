@@ -15,17 +15,20 @@ errors_bp = Blueprint("errors", __name__)
 
 def make_error_response(status_code: int, error_name: str, message: str):
     """Returns JSON or HTML depending on request Accept header / context."""
+    request_id = getattr(g, "request_id", None)
     if request.is_json or request.path.startswith("/api/"):
         return jsonify({
             "error": error_name,
             "status": status_code,
-            "message": message
+            "message": message,
+            "request_id": request_id,
         }), status_code
     return render_template(
         f"errors/{status_code}.html",
         status_code=status_code,
         error_name=error_name,
-        message=message
+        message=message,
+        request_id=request_id,
     ), status_code
 
 
