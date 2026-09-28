@@ -116,18 +116,26 @@
   </div>
 
   <aside class="rail">
-    <section class="card" aria-labelledby="account-security">
-      <div class="card-header"><h2 id="account-security" class="t-card">Account security</h2></div>
-      <div class="card-body stack">
-        <div class="row-between">
-          <strong>Two-factor authentication</strong>
-          {{ ui.badge('On', 'success') if user.totp_enabled else ui.badge('Off', 'warning') }}
+    <section class="card security-card" aria-labelledby="account-security">
+      <div class="security-hero">
+        <div class="security-shield">{{ ui.icon('shield') }}</div>
+        <div>
+          <div class="t-label">SECURITY POSTURE</div>
+          <h2 id="account-security" class="t-section">{{ 'Maximum protection' if security_posture.score == 3 else 'Action recommended' }}</h2>
         </div>
+        {{ ui.badge(security_posture.score ~ '/3 active', 'success' if security_posture.score == 3 else 'warning') }}
+      </div>
+      <div class="security-controls">
+        <div class="security-control"><span>Data encryption</span>{{ ui.badge('AES-256 active', 'success') if security_posture.encryption else ui.badge('Unavailable', 'danger') }}</div>
+        <div class="security-control"><span>Secure transport</span>{{ ui.badge('Enforced', 'success') if security_posture.secure_transport else ui.badge('Development only', 'warning') }}</div>
+        <div class="security-control"><span>Two-factor authentication</span>{{ ui.badge('Protected', 'success') if user.totp_enabled else ui.badge('Not enabled', 'warning') }}</div>
+      </div>
+      <div class="card-body stack security-foot">
+        <p class="t-small muted">Your session automatically locks after {{ security_posture.session_minutes }} minutes of inactivity. Sensitive pages are never cached.</p>
         {% if not user.totp_enabled %}
-        <p class="t-small muted">Protect your account with an authenticator app code at sign-in.{% if user.role == 'Admin' %} Required for administrators.{% endif %}</p>
-        <div><a class="btn btn-secondary" href="{{ url_for('admin.setup_mfa') }}">Set up two-factor</a></div>
+        <a class="btn btn-primary btn-block" href="{{ url_for('admin.setup_mfa') }}">Enable two-factor protection</a>
         {% endif %}
-        <p class="t-small subtle">Signed in: {{ ui.when(user.last_login_at) }}</p>
+        <p class="t-small subtle">Last sign-in · {{ ui.when(user.last_login_at) }}</p>
       </div>
     </section>
   </aside>

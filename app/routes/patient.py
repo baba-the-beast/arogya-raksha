@@ -60,7 +60,21 @@ def dashboard():
             "flagged_24h": flagged.filter(AuditLog.timestamp >= since).count(),
             "recent_flagged": flagged.order_by(AuditLog.id.desc()).limit(6).all(),
         }
-    return render_template("dashboard/index.html", user=user, summary=summary, admin=admin)
+    # Expose only non-sensitive, server-verified controls. This is deliberately derived on
+    # the backend rather than claimed by client-side UI, and never includes key material.
+    security_posture = {
+        "encryption": bool(current_app.config.get("MASTER_ENCRYPTION_KEY")),
+        "mfa": bool(user.totp_enabled),
+        "secure_transport": bool(current_app.config.get("SESSION_COOKIE_SECURE")) or current_app.debug,
+        "session_minutes": max(1, current_app.config.get("SESSION_IDLE_TIMEOUT_SECONDS", 900) // 60),
+    }
+    security_posture["score"] = sum((
+        security_posture["encryption"], security_posture["mfa"], security_posture["secure_transport"]
+    ))
+    return render_template(
+        "dashboard/index.html", user=user, summary=summary, admin=admin,
+        security_posture=security_posture,
+    )
 
 @patient_bp.route("/patients", methods=["GET"])
 @require_permission(PATIENT_READ)

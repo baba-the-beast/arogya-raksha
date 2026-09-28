@@ -37,6 +37,8 @@ def init_talisman(app):
         response.headers.setdefault("Cross-Origin-Resource-Policy", "same-origin")
         # X-Permitted-Cross-Domain-Policies: Disallow Adobe Flash/Acrobat cross-domain policies
         response.headers.setdefault("X-Permitted-Cross-Domain-Policies", "none")
+        response.headers.setdefault("X-Robots-Tag", "noindex, nofollow, noarchive")
+        response.headers.setdefault("Origin-Agent-Cluster", "?1")
 
         # Cache-Control: Protect PHI & session views from browser disk & intermediate proxy caches
         from flask import request
@@ -59,13 +61,9 @@ def init_talisman(app):
         ],
         "style-src": [
             "'self'",
-            "'unsafe-inline'",
-            "https://fonts.googleapis.com",
         ],
         "font-src": [
             "'self'",
-            "https://fonts.gstatic.com",
-            "https://cdn.21st.dev",
         ],
         "img-src": [
             "'self'",
@@ -73,15 +71,12 @@ def init_talisman(app):
         ],
         "connect-src": [
             "'self'",
-            "https://cdn.jsdelivr.net",
-            "https://www.gstatic.com",
         ],
-        "worker-src": [
-            "'self'",
-            "blob:",
-        ],
+        "worker-src": "'none'",
         "object-src": "'none'",
-        "base-uri": "'self'",
+        "base-uri": "'none'",
+        "form-action": "'self'",
+        "frame-src": "'none'",
         "frame-ancestors": "'none'",  # Anti-clickjacking
     }
 
@@ -111,7 +106,7 @@ def init_talisman(app):
         strict_transport_security=force_https,
         strict_transport_security_max_age=31536000 if force_https else 0,
         frame_options="DENY",
-        referrer_policy="strict-origin-when-cross-origin",
+        referrer_policy="no-referrer",
         x_content_type_options=True,
     )
     return talisman
