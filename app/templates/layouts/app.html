@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% import "_ui.html" as ui %}
+
+{% macro nav(endpoint, label, icon_name, active_endpoints=()) -%}
+{% set active = request.endpoint == endpoint or request.endpoint in active_endpoints %}
+<a class="nav-item" href="{{ url_for(endpoint) }}"{% if active %} aria-current="page"{% endif %}>{{ ui.icon(icon_name) }}<span>{{ label }}</span></a>
+{%- endmacro %}
+
+{% block body %}
+<a href="#main-content" class="skip-link">Skip to content</a>
+<div class="shell">
+  <aside id="app-sidebar" class="sidebar" aria-label="Main navigation">
+    <a class="brand" href="{{ url_for('patient.dashboard') }}">
+      <span class="brand-mark" aria-hidden="true">AR</span>
+      <span>
+        <span class="brand-name">ArogyaRaksha</span><br>
+        <span class="brand-org">{{ current_user.tenant.name if current_user.tenant else 'Clinic' }}</span>
+      </span>
+    </a>
+    <nav aria-label="Primary">
+      {{ nav('patient.dashboard', 'Home', 'home') }}
+      {% if has_permission(current_user.role, 'PATIENT_READ') %}
+      {{ nav('patient.list_patients', 'Patients', 'patients', ('patient.detail_patient', 'patient.edit_patient')) }}
+      {% endif %}
+      {% if has_permission(current_user.role, 'PATIENT_CREATE') %}
+      {{ nav('patient.create_patient', 'Register patient', 'user-plus') }}
+      {% endif %}
+      {% if has_permission(current_user.role, 'USER_MANAGE') or has_permission(current_user.role, 'AUDIT_READ') %}
+      <div class="nav-section">Administration</div>
+      {% if has_permission(current_user.role, 'USER_MANAGE') %}{{ nav('admin.manage_users', 'Users', 'patients') }}{% endif %}
+      {% if has_permission(current_user.role, 'AUDIT_READ') %}{{ nav('admin.view_audit_log', 'Audit log', 'list') }}{% endif %}
+      {% endif %}
+    </nav>
+    <div class="sidebar-spacer"></div>
+    {% if not current_user.totp_enabled %}
+    {{ nav('admin.setup_mfa', 'Set up two-factor', 'lock') }}
+    {% endif %}
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="breadcrumb">
+        <button id="menu-toggle" class="btn btn-ghost btn-sm menu-toggle" type="button" aria-controls="app-sidebar" aria-expanded="false" aria-label="Open navigation">{{ ui.icon('menu') }}</button>
+        {% block breadcrumb %}<span aria-current="page">{{ self.title() }}</span>{% endblock %}
+      </div>
+      <div class="user-box">
+        {{ ui.avatar(current_user.username) }}
+        <div class="user-meta">
+          <strong>{{ current_user.username }}</strong>
+          <span>{{ current_user.role }}</span>
+        </div>
+        <span class="vr" aria-hidden="true"></span>
+        <form action="{{ url_for('auth.logout') }}" method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-ghost">Sign out</button>
+        </form>
+      </div>
+    </header>
+
+    <main id="main-content" class="content">
+      {{ ui.flashes() }}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+{% endblock %}

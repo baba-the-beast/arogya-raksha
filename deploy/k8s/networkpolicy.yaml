@@ -1,0 +1,80 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: arogya-default-deny
+  namespace: clinical-security
+  labels:
+    app.kubernetes.io/name: arogyaraksha
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: arogyaraksha
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow ingress on port 5000 from the ingress controller namespace
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 5000
+  egress:
+    # Allow egress to PostgreSQL (Port 5432) — in-cluster pods or managed instances
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: database
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 169.254.169.254/32  # Block AWS/GCP cloud metadata service (anti-SSRF)
+      ports:
+        - protocol: TCP
+          port: 5432
+    # Allow egress to Redis (Port 6379) — in-cluster pods or managed instances
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: cache
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 169.254.169.254/32  # Block AWS/GCP cloud metadata service (anti-SSRF)
+      ports:
+        - protocol: TCP
+          port: 6379
+    # Allow egress to external HTTPS endpoints (Port 443) for KMS/Vault and incident alert webhooks
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 169.254.169.254/32  # Block cloud instance metadata service
+      ports:
+        - protocol: TCP
+          port: 443
+    # Allow egress to the SMTP relay (submission port) for password reset delivery
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 169.254.169.254/32
+      ports:
+        - protocol: TCP
+          port: 587
+    # Allow DNS resolution via CoreDNS
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53

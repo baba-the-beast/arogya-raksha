@@ -1,0 +1,19 @@
+{# Encrypted clinical fields shared by the register and edit forms. `data` is the form or record dict. #}
+{% macro clinical_fields(data) -%}
+<div class="field span-all">
+  <label class="field-label" for="name">Full name <span class="req" aria-hidden="true">*</span></label>
+  <input class="input" id="name" name="name" type="text" maxlength="128" value="{{ data.get('name', '') }}" autocomplete="off" required>
+</div>
+<div class="field span-all">
+  <label class="field-label" for="diagnosis">Diagnosis</label>
+  <input class="input" id="diagnosis" name="diagnosis" type="text" maxlength="10240" value="{{ data.get('diagnosis', '') }}" autocomplete="off">
+</div>
+<div class="field span-all">
+  <label class="field-label" for="medical_history">Medical history &amp; allergies</label>
+  <textarea class="textarea" id="medical_history" name="medical_history" maxlength="10240" rows="4">{{ data.get('medical_history', '') }}</textarea>
+</div>
+<div class="field span-all">
+  <label class="field-label" for="notes">Clinical notes</label>
+  <textarea class="textarea" id="notes" name="notes" maxlength="10240" rows="5">{{ data.get('notes', '') }}</textarea>
+</div>
+{%- endmacro %}

@@ -1,0 +1,42 @@
+{% extends "layouts/auth.html" %}
+{% block title %}Sign in{% endblock %}
+
+{% block card %}
+<div class="auth-heading">
+  <h1 class="t-page">Sign in</h1>
+  <p>Use your staff account.</p>
+</div>
+<form action="{{ url_for('auth.login') }}" method="POST" class="form-stack" novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {% if request.args.get('next') %}<input type="hidden" name="next" value="{{ request.args.get('next') }}">{% endif %}
+  <div class="field">
+    <label class="field-label" for="username">Username</label>
+    <input class="input" id="username" name="username" type="text" value="{{ username or '' }}" autocomplete="username" autocapitalize="none" spellcheck="false" required autofocus>
+  </div>
+  <div class="field">
+    <div class="row-between">
+      <label class="field-label" for="password">Password</label>
+      <a class="t-small" href="{{ url_for('auth.forgot_password') }}">Forgot password?</a>
+    </div>
+    <div class="input-group no-icon">
+      <input class="input has-action" id="password" name="password" type="password" autocomplete="current-password" required>
+      <button type="button" class="btn btn-ghost btn-sm input-action" data-reveal-target="password" aria-pressed="false">Show</button>
+    </div>
+  </div>
+  <button type="submit" class="btn btn-primary btn-block">Sign in</button>
+</form>
+{% endblock %}
+
+{% block below %}
+<p class="auth-note">Access is limited to authorized staff. Every sign-in attempt is logged.</p>
+{% if show_demo_accounts %}
+<div class="demo-accounts">
+  <div class="t-label">Demo accounts · development only</div>
+  <ul class="mono">
+    <li>doctor_alice / DocSecurePass#2026</li>
+    <li>nurse_bob / NursePass#2026</li>
+    <li>admin_charlie / AdminMaster#2026</li>
+  </ul>
+</div>
+{% endif %}
+{% endblock %}

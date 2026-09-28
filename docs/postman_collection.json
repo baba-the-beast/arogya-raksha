@@ -1,0 +1,139 @@
+{
+  "info": {
+    "name": "ArogyaRaksha - API Collection",
+    "_postman_id": "cns-healthcare-api-collection-2026",
+    "description": "Comprehensive Postman test collection for KLE Technological University Cryptography & Network Security (26ECSC403) project.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/healthz",
+          "host": ["{{base_url}}"],
+          "path": ["healthz"]
+        }
+      }
+    },
+    {
+      "name": "Auth - Login as Doctor",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/x-www-form-urlencoded" }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            { "key": "username", "value": "doctor_alice" },
+            { "key": "password", "value": "DocSecurePass#2026" }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/login",
+          "host": ["{{base_url}}"],
+          "path": ["login"]
+        }
+      }
+    },
+    {
+      "name": "Auth - Login as Nurse",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/x-www-form-urlencoded" }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            { "key": "username", "value": "nurse_bob" },
+            { "key": "password", "value": "NursePass#2026" }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/login",
+          "host": ["{{base_url}}"],
+          "path": ["login"]
+        }
+      }
+    },
+    {
+      "name": "Auth - Login as Admin",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/x-www-form-urlencoded" }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            { "key": "username", "value": "admin_charlie" },
+            { "key": "password", "value": "AdminMaster#2026" }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/login",
+          "host": ["{{base_url}}"],
+          "path": ["login"]
+        }
+      }
+    },
+    {
+      "name": "Patient - List Encrypted Index",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/patients",
+          "host": ["{{base_url}}"],
+          "path": ["patients"]
+        }
+      }
+    },
+    {
+      "name": "Patient - View and Decrypt Record #1",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/patients/1",
+          "host": ["{{base_url}}"],
+          "path": ["patients", "1"]
+        }
+      }
+    },
+    {
+      "name": "Admin - User Management Console",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/admin/users",
+          "host": ["{{base_url}}"],
+          "path": ["admin", "users"]
+        }
+      }
+    },
+    {
+      "name": "Admin - Inspect Cryptographic Audit Trail",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/admin/audit",
+          "host": ["{{base_url}}"],
+          "path": ["admin", "audit"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:5000"
+    }
+  ]
+}

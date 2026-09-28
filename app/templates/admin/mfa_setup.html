@@ -1,0 +1,40 @@
+{% extends "layouts/app.html" %}
+{% block title %}Two-factor authentication{% endblock %}
+
+{% block content %}
+{{ ui.page_header('Set up two-factor authentication', 'After setup, signing in requires your password and a 6-digit code from an authenticator app.' ~ (' Required for administrators.' if user.role == 'Admin' else '')) }}
+
+<div class="columns">
+  <section class="card" aria-labelledby="setup">
+    <div class="card-header"><h2 id="setup" class="t-card">Link your authenticator app</h2></div>
+    <div class="card-body stack">
+      <ol class="steps">
+        <li>Open an authenticator app (Google Authenticator, Microsoft Authenticator, 1Password, …).</li>
+        <li>Add an account using the setup key below, or open the setup link on this device.</li>
+        <li>Enter the 6-digit code the app shows to finish.</li>
+      </ol>
+      <div class="field">
+        <span class="field-label">Setup key</span>
+        <div class="secret-box">{{ secret }}</div>
+        <p class="field-help">Account: {{ user.username }} · Issuer: ArogyaRaksha · Time-based, 6 digits</p>
+      </div>
+      <div><a class="btn btn-secondary btn-sm" href="{{ otp_uri }}">Open in authenticator app</a></div>
+    </div>
+  </section>
+
+  <aside class="rail">
+    <section class="card" aria-labelledby="confirm">
+      <div class="card-header"><h2 id="confirm" class="t-card">Confirm</h2></div>
+      <form action="{{ url_for('admin.confirm_mfa') }}" method="POST" class="card-body form-stack" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="field">
+          <label class="field-label" for="totp_code">6-digit code</label>
+          <input class="input otp-input" id="totp_code" name="totp_code" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Turn on two-factor</button>
+        <a class="btn btn-ghost btn-block" href="{{ url_for('admin.manage_users') if user.role == 'Admin' else url_for('patient.dashboard') }}">Not now</a>
+      </form>
+    </section>
+  </aside>
+</div>
+{% endblock %}

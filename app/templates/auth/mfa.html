@@ -1,0 +1,18 @@
+{% extends "layouts/auth.html" %}
+{% block title %}Two-factor verification{% endblock %}
+
+{% block card %}
+<div class="auth-heading">
+  <h1 class="t-page">Enter your code</h1>
+  <p>Open your authenticator app and enter the 6-digit code for <strong>{{ username }}</strong>.</p>
+</div>
+<form action="{{ url_for('auth.mfa_verify') }}" method="POST" class="form-stack" novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="field">
+    <label class="field-label" for="totp_code">Authentication code</label>
+    <input class="input otp-input" id="totp_code" name="totp_code" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" required autofocus>
+  </div>
+  <button type="submit" class="btn btn-primary btn-block">Verify</button>
+  <a class="t-small" href="{{ url_for('auth.login') }}">Use a different account</a>
+</form>
+{% endblock %}

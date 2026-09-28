@@ -1,0 +1,19 @@
+{% extends "layouts/app.html" if current_user else "layouts/auth.html" %}
+{# Shared error page. Child templates set `heading`; the route supplies status_code, error_name and message. #}
+{% block title %}{{ heading }}{% endblock %}
+
+{% macro error_body() %}
+<p class="error-code">Error {{ status_code }} · {{ error_name }}</p>
+<h1 class="t-page">{{ heading }}</h1>
+<p class="muted">{{ message }}</p>
+<div class="actions">
+  {% if current_user %}
+  <a class="btn btn-primary" href="{{ url_for('patient.dashboard') }}">Go to Home</a>
+  {% else %}
+  <a class="btn btn-primary" href="{{ url_for('auth.login') }}">Sign in</a>
+  {% endif %}
+</div>
+{% endmacro %}
+
+{% block content %}<div class="card error-card">{{ error_body() }}</div>{% endblock %}
+{% block card %}{{ error_body() }}{% endblock %}

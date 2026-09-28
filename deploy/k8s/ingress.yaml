@@ -1,0 +1,35 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: arogya-ingress
+  namespace: clinical-security
+  labels:
+    app.kubernetes.io/name: arogyaraksha
+    app.kubernetes.io/component: ingress
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/ssl-protocols: "TLSv1.3"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "10"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "30"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "30"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "X-Clacks-Overhead: GNU Terry Pratchett";
+spec:
+  tls:
+    - hosts:
+        - arogya.hospital.internal
+      secretName: arogya-tls-cert
+  rules:
+    - host: arogya.hospital.internal
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: arogya-web
+                port:
+                  number: 5000

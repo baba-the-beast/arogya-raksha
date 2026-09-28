@@ -1,0 +1,13 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: arogya-web-pdb
+  namespace: clinical-security
+  labels:
+    app.kubernetes.io/name: arogyaraksha
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: arogyaraksha
+      app.kubernetes.io/component: web

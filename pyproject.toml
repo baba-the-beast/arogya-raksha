@@ -1,0 +1,35 @@
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "S",   # flake8-bandit (security static analysis)
+]
+ignore = [
+    "E501", # line length handled gracefully
+    "S101", # allow assert in test assertions
+    "S104", # allow binding to 0.0.0.0 in container / WSGI configs
+    "S105", # allow hardcoded test passwords in fixtures
+    "S106", # allow hardcoded test passwords in fixtures
+    "S107", # allow hardcoded password defaults in config/tests
+    "B008", # allow function calls in default argument definitions
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101", "S105", "S106", "S107", "S110", "F401", "F841", "B018"]
+"scripts/*" = ["S105", "S106", "S107", "T201", "S603", "S607"]
+"certs/*" = ["S101", "S105", "S106", "T201"]
+"run.py" = ["T201", "S104"]
+"app/routes/errors.py" = ["ARG001"]
+"app/config.py" = ["S110"]
+"migrations/*" = ["E402", "F401", "UP007", "UP035", "I001"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]

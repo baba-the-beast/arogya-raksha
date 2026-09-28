@@ -1,0 +1,60 @@
+# Transactional outbox worker: delivers security alerts and password reset links.
+# Multiple replicas are safe: rows are claimed with FOR UPDATE SKIP LOCKED.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: arogya-worker
+  namespace: clinical-security
+  labels:
+    app.kubernetes.io/name: arogyaraksha
+    app.kubernetes.io/component: worker
+    app.kubernetes.io/part-of: arogyaraksha-cns
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: arogyaraksha
+      app.kubernetes.io/component: worker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: arogyaraksha
+        app.kubernetes.io/component: worker
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: worker
+          image: arogyaraksha:latest
+          imagePullPolicy: IfNotPresent
+          command: ["flask", "process-outbox", "--loop", "--interval", "5"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          envFrom:
+            - configMapRef:
+                name: arogya-config
+            - secretRef:
+                name: arogya-secrets
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+          volumeMounts:
+            - name: tmp-volume
+              mountPath: /tmp
+      volumes:
+        - name: tmp-volume
+          emptyDir: {}

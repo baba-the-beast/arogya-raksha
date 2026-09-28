@@ -1,0 +1,46 @@
+# Environment variables and secrets
+.env
+.env.local
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+instance/
+backups/
+
+# TLS / Certificates
+certs/*.pem
+certs/*.key
+certs/*.crt
+certs/*.csr
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# Virtual Environments
+.venv/
+venv/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Temporary scratch
+scratch/
+
+# Node
+node_modules/
+.next/
+dist/
+

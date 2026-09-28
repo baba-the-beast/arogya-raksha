@@ -1,0 +1,113 @@
+x-app-env: &app-env
+  FLASK_APP: "app:create_app()"
+  DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-arogya_user}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}@db:5432/${POSTGRES_DB:-arogya_db}
+  RATELIMIT_STORAGE_URI: redis://redis:6379/0
+  REDIS_URL: redis://redis:6379/0
+  SESSION_REDIS_URL: redis://redis:6379/1
+  SECRET_KEY: ${SECRET_KEY:?SECRET_KEY must be set in .env}
+  MASTER_ENCRYPTION_KEY: ${MASTER_ENCRYPTION_KEY:?MASTER_ENCRYPTION_KEY must be set in .env}
+  CURRENT_KEY_VERSION: ${CURRENT_KEY_VERSION:-1}
+  FORCE_HTTPS: ${FORCE_HTTPS:-False}
+  MFA_ENFORCE_ADMIN: ${MFA_ENFORCE_ADMIN:-True}
+  # Only list real reverse proxies here. The Docker bridge gateway (172.16.0.0/12) is NOT a
+  # proxy: trusting it lets any client spoof X-Forwarded-For through the published port.
+  TRUSTED_PROXY_IPS: ${TRUSTED_PROXY_IPS:-}
+  APP_BASE_URL: ${APP_BASE_URL:-http://localhost:5000}
+  SMTP_HOST: ${SMTP_HOST:-}
+  SMTP_PORT: ${SMTP_PORT:-587}
+  SMTP_USERNAME: ${SMTP_USERNAME:-}
+  SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+  MAIL_FROM: ${MAIL_FROM:-no-reply@arogyaraksha.local}
+
+services:
+  # One-shot schema migration; web and worker start only after it succeeds
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["flask", "init-db"]
+    environment: *app-env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - arogya-net
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: arogya-web
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment: *app-env
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - arogya-net
+
+  # Transactional outbox worker: delivers security alerts and password reset links
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: arogya-worker
+    restart: unless-stopped
+    command: ["flask", "process-outbox", "--loop"]
+    environment: *app-env
+    healthcheck:
+      disable: true
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - arogya-net
+
+  db:
+    image: postgres:16-alpine
+    container_name: arogya-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-arogya_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}
+      - POSTGRES_DB=${POSTGRES_DB:-arogya_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-arogya_user} -d ${POSTGRES_DB:-arogya_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - arogya-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: arogya-redis
+    restart: unless-stopped
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - arogya-net
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  arogya-net:
+    driver: bridge

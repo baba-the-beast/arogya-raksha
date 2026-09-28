@@ -1,0 +1,50 @@
+{% extends "layouts/app.html" %}
+{% from "patient/_clinical_fields.html" import clinical_fields %}
+{% block title %}Edit {{ patient.patient_id }}{% endblock %}
+{% block breadcrumb %}
+<a href="{{ url_for('patient.list_patients') }}">Patients</a><span class="sep">/</span><a class="mono" href="{{ url_for('patient.detail_patient', record_id=patient.id) }}">{{ patient.patient_id }}</a><span class="sep">/</span><span aria-current="page">Edit</span>
+{% endblock %}
+
+{% block content %}
+{{ ui.page_header('Edit ' ~ patient.name, 'Version ' ~ patient.version_id ~ '. If someone saves a newer version first, your changes will not overwrite theirs.') }}
+
+{% if break_glass_reason %}
+<div class="callout callout-warning">
+  {{ ui.icon('alert') }}
+  <div class="callout-body">
+    <strong>Emergency access</strong>
+    <p>You are editing a record assigned to {{ patient.assigned_doctor_name or 'another doctor' }}. This edit is recorded in the audit log with your declared reason.</p>
+  </div>
+</div>
+{% endif %}
+
+<form action="{{ url_for('patient.edit_patient', record_id=patient.id) }}" method="POST" class="form-stack" novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="version_id" value="{{ patient.version_id }}">
+  {% if break_glass_reason %}<input type="hidden" name="break_glass_reason" value="{{ break_glass_reason }}">{% endif %}
+
+  <section class="card" aria-labelledby="identification">
+    <div class="card-header"><h2 id="identification" class="t-card">Identification</h2><span class="meta mono">{{ patient.patient_id }}</span></div>
+    <div class="card-body form-grid">
+      <div class="field">
+        <label class="field-label" for="age_band">Age band</label>
+        <select class="select" id="age_band" name="age_band">{{ ui.select_options(AGE_BANDS, patient.age_band) }}</select>
+      </div>
+      <div class="field">
+        <label class="field-label" for="gender">Gender</label>
+        <select class="select" id="gender" name="gender">{{ ui.select_options(GENDERS, patient.gender) }}</select>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="clinical">
+    <div class="card-header"><h2 id="clinical" class="t-card">Clinical information</h2>{{ ui.badge('Encrypted', 'accent') }}</div>
+    <div class="card-body form-grid">{{ clinical_fields(patient) }}</div>
+  </section>
+
+  <div class="form-actions">
+    <a class="btn btn-ghost" href="{{ url_for('patient.detail_patient', record_id=patient.id) }}">Cancel</a>
+    <button type="submit" class="btn btn-primary">Save changes</button>
+  </div>
+</form>
+{% endblock %}

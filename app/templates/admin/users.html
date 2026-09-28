@@ -1,0 +1,78 @@
+{% extends "layouts/app.html" %}
+{% block title %}Users{% endblock %}
+{% block breadcrumb %}<span>Administration</span><span class="sep">/</span><span aria-current="page">Users</span>{% endblock %}
+
+{% block content %}
+{% set active_count = users | selectattr('is_active') | list | length %}
+{{ ui.page_header('Users', (users | length) ~ ' accounts in ' ~ (current_user.tenant.name if current_user.tenant else 'this clinic') ~ ' · ' ~ active_count ~ ' active') }}
+
+<div class="columns">
+  <section class="card" aria-label="User accounts">
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>User</th><th>Role</th><th>Email</th><th>2FA</th><th>Status</th><th>Last sign-in</th><th class="end"><span class="visually-hidden">Actions</span></th></tr></thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td><span class="cell-user">{{ ui.avatar(u.username) }}{{ u.username }}</span></td>
+            <td>{{ ui.role_badge(u.role) }}</td>
+            <td class="{{ 'muted' if u.email else 'subtle' }}">{{ u.email or '—' }}</td>
+            <td>{{ ui.badge('On', 'success') if u.totp_enabled else ui.badge('Off') }}</td>
+            <td>{{ ui.badge('Active', 'success') if u.is_active else ui.badge('Disabled') }}</td>
+            <td class="muted nowrap">{{ ui.when(u.last_login_at) if u.last_login_at else 'Never' }}</td>
+            <td class="end">
+              {% if u.id == user.id %}
+              <span class="t-small subtle">You</span>
+              {% else %}
+              <span class="row-actions">
+                <form action="{{ url_for('admin.toggle_user', target_user_id=u.id) }}" method="POST">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  {% if u.is_active %}
+                  <button type="submit" class="link-btn danger" data-confirm="Disable {{ u.username }}? They will be signed out everywhere immediately.">Disable</button>
+                  {% else %}
+                  <button type="submit" class="link-btn">Enable</button>
+                  {% endif %}
+                </form>
+              </span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <aside class="rail">
+    <section class="card" id="add-user" aria-labelledby="add-user-title">
+      <div class="card-header"><h2 id="add-user-title" class="t-card">Add user</h2></div>
+      <form action="{{ url_for('admin.manage_users') }}" method="POST" class="card-body form-stack" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="field">
+          <label class="field-label" for="username">Username</label>
+          <input class="input" id="username" name="username" type="text" maxlength="30" pattern="[A-Za-z0-9_-]{3,30}" autocomplete="off" autocapitalize="none" spellcheck="false" required>
+          <p class="field-help">3–30 letters, digits, underscores or hyphens.</p>
+        </div>
+        <div class="field">
+          <label class="field-label" for="email">Email</label>
+          <input class="input" id="email" name="email" type="email" maxlength="255" autocomplete="off">
+          <p class="field-help">Used only to deliver password reset links.</p>
+        </div>
+        <div class="field">
+          <label class="field-label" for="password">Initial password</label>
+          <div class="input-group no-icon">
+            <input class="input has-action" id="password" name="password" type="password" maxlength="128" autocomplete="new-password" required>
+            <button type="button" class="btn btn-ghost btn-sm input-action" data-reveal-target="password" aria-pressed="false">Show</button>
+          </div>
+          <p class="field-help">At least 8 characters, with upper and lower case letters and a digit.</p>
+        </div>
+        <div class="field">
+          <label class="field-label" for="role">Role</label>
+          <select class="select" id="role" name="role" required>{{ ui.select_options(roles, 'Doctor') }}</select>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Create user</button>
+      </form>
+    </section>
+  </aside>
+</div>
+{% endblock %}

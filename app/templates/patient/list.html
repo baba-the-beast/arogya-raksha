@@ -1,0 +1,78 @@
+{% extends "layouts/app.html" %}
+{% block title %}Patients{% endblock %}
+
+{% macro page_url(p) -%}
+{{ url_for('patient.list_patients', page=p, per_page=pagination.per_page, q=q, age_band=age_band, gender=gender) }}
+{%- endmacro %}
+
+{% block content %}
+{% set filtered = q or age_band or gender %}
+{% call ui.page_header('Patients', pagination.total ~ (' matching patients' if filtered else ' patients in ' ~ (current_user.tenant.name if current_user.tenant else 'this clinic'))) %}
+  {% if can_create %}<a class="btn btn-primary" href="{{ url_for('patient.create_patient') }}">Register patient</a>{% endif %}
+{% endcall %}
+
+<section class="card" aria-label="Patient list">
+  <form class="filters" method="GET" action="{{ url_for('patient.list_patients') }}" role="search" data-autosubmit>
+    <div class="input-group">
+      {{ ui.icon('search') }}
+      <label class="visually-hidden" for="q">Search by MRN</label>
+      <input class="input" id="q" name="q" type="search" value="{{ q }}" placeholder="Search by MRN" autocomplete="off">
+    </div>
+    <label class="visually-hidden" for="age_band">Age band</label>
+    <select class="select" id="age_band" name="age_band">{{ ui.select_options(AGE_BANDS, age_band, 'All age bands') }}</select>
+    <label class="visually-hidden" for="gender">Gender</label>
+    <select class="select" id="gender" name="gender">{{ ui.select_options(GENDERS, gender, 'All genders') }}</select>
+    <button type="submit" class="btn btn-secondary">Apply</button>
+    {% if filtered %}<a class="btn btn-ghost" href="{{ url_for('patient.list_patients') }}">Clear</a>{% endif %}
+  </form>
+
+  {% if patients %}
+  <div class="table-wrap">
+    <table class="table" id="patient-table">
+      <thead>
+        <tr><th>MRN</th><th>Age band</th><th>Gender</th><th>Attending doctor</th><th>Registered</th><th class="end"><span class="visually-hidden">Actions</span></th></tr>
+      </thead>
+      <tbody>
+        {% for p in patients %}
+        <tr>
+          <td class="mono">{{ p.patient_id }}</td>
+          <td class="muted">{{ p.age_band }}</td>
+          <td class="muted">{{ p.gender }}</td>
+          <td>{% if p.assigned_doctor_name %}{{ p.assigned_doctor_name }}{% else %}{{ ui.badge('Unassigned') }}{% endif %}</td>
+          <td class="muted nowrap">{{ ui.when(p.created_at) }}</td>
+          <td class="end"><span class="row-actions">
+            <a href="{{ url_for('patient.detail_patient', record_id=p.id) }}">View</a>
+          </span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="card-footer">
+    <span class="t-small muted">Showing {{ (pagination.page - 1) * pagination.per_page + 1 }}–{{ [pagination.page * pagination.per_page, pagination.total] | min }} of {{ pagination.total }}</span>
+    {% if pagination.pages > 1 %}
+    <nav class="pager" aria-label="Pagination">
+      <a class="btn btn-secondary btn-sm" href="{{ page_url(pagination.prev_num) }}"{% if not pagination.has_prev %} aria-disabled="true" tabindex="-1"{% endif %}>Previous</a>
+      {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=1) %}
+        {% if p %}<a class="page-num" href="{{ page_url(p) }}"{% if p == pagination.page %} aria-current="page"{% endif %}>{{ p }}</a>{% else %}<span class="subtle">…</span>{% endif %}
+      {% endfor %}
+      <a class="btn btn-secondary btn-sm" href="{{ page_url(pagination.next_num) }}"{% if not pagination.has_next %} aria-disabled="true" tabindex="-1"{% endif %}>Next</a>
+    </nav>
+    {% endif %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    {% if filtered %}
+    <strong>No patients match these filters</strong>
+    <p>Search matches the start of the MRN. Try a shorter prefix or clear the filters.</p>
+    <a class="btn btn-secondary" href="{{ url_for('patient.list_patients') }}">Clear filters</a>
+    {% else %}
+    <strong>No patients yet</strong>
+    <p>Registered patients will appear here.</p>
+    {% if can_create %}<a class="btn btn-primary" href="{{ url_for('patient.create_patient') }}">Register the first patient</a>{% endif %}
+    {% endif %}
+  </div>
+  {% endif %}
+</section>
+<p class="footnote">Search matches the MRN only. Names and clinical fields are encrypted at rest and are not searchable.</p>
+{% endblock %}

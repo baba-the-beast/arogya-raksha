@@ -1,0 +1,53 @@
+{% extends "layouts/app.html" %}
+{% from "patient/_clinical_fields.html" import clinical_fields %}
+{% block title %}Register patient{% endblock %}
+{% block breadcrumb %}
+<a href="{{ url_for('patient.list_patients') }}">Patients</a><span class="sep">/</span><span aria-current="page">Register patient</span>
+{% endblock %}
+
+{% block content %}
+{{ ui.page_header('Register patient', 'The MRN, age band and gender are stored in the clear for search. Everything under Clinical information is encrypted.') }}
+
+<form action="{{ url_for('patient.create_patient') }}" method="POST" class="form-stack" novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <section class="card" aria-labelledby="identification">
+    <div class="card-header"><h2 id="identification" class="t-card">Identification</h2></div>
+    <div class="card-body form-grid">
+      <div class="field">
+        <label class="field-label" for="patient_id">MRN <span class="req" aria-hidden="true">*</span></label>
+        <input class="input mono" id="patient_id" name="patient_id" type="text" maxlength="64" value="{{ form.get('patient_id', '') }}" placeholder="e.g. P-2026-002" autocomplete="off" required>
+        <p class="field-help">Letters, digits, hyphens and underscores. Unique within your clinic.</p>
+      </div>
+      <div class="field">
+        <label class="field-label" for="age_band">Age band</label>
+        <select class="select" id="age_band" name="age_band">{{ ui.select_options(AGE_BANDS, form.get('age_band', '30-39')) }}</select>
+      </div>
+      <div class="field">
+        <label class="field-label" for="gender">Gender</label>
+        <select class="select" id="gender" name="gender">{{ ui.select_options(GENDERS, form.get('gender', 'Undisclosed')) }}</select>
+      </div>
+      <div class="field span-all">
+        <label class="field-label" for="assigned_doctor_id">Attending doctor</label>
+        <select class="select" id="assigned_doctor_id" name="assigned_doctor_id">
+          <option value="">{{ 'Me (' ~ current_user.username ~ ')' if current_user.role == 'Doctor' else 'Unassigned: any doctor can pick up' }}</option>
+          {% for doc in doctors or [] if doc.id != current_user.id %}
+          <option value="{{ doc.id }}"{% if form.get('assigned_doctor_id') == doc.id | string %} selected{% endif %}>{{ doc.username }}</option>
+          {% endfor %}
+        </select>
+        <p class="field-help">Only the attending doctor can edit or archive the record without declaring emergency access.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="clinical">
+    <div class="card-header"><h2 id="clinical" class="t-card">Clinical information</h2>{{ ui.badge('Encrypted', 'accent') }}</div>
+    <div class="card-body form-grid">{{ clinical_fields(form) }}</div>
+  </section>
+
+  <div class="form-actions">
+    <a class="btn btn-ghost" href="{{ url_for('patient.list_patients') }}">Cancel</a>
+    <button type="submit" class="btn btn-primary">Register patient</button>
+  </div>
+</form>
+{% endblock %}

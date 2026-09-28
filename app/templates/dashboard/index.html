@@ -1,0 +1,135 @@
+{% extends "layouts/app.html" %}
+{% block title %}Home{% endblock %}
+
+{% block content %}
+{% call ui.page_header('Welcome back, ' ~ user.username, current_user.tenant.name if current_user.tenant else None) %}
+  {% if has_permission(user.role, 'PATIENT_CREATE') %}
+  <a class="btn btn-primary" href="{{ url_for('patient.create_patient') }}">Register patient</a>
+  {% elif has_permission(user.role, 'USER_MANAGE') %}
+  <a class="btn btn-primary" href="{{ url_for('admin.manage_users') }}#add-user">Add user</a>
+  {% endif %}
+{% endcall %}
+
+{% if summary %}
+<section class="stats" aria-label="Caseload">
+  <div class="card stat">
+    <span class="label">Patients in clinic</span>
+    <span class="value">{{ summary.total }}</span>
+    <span class="foot">Across all doctors</span>
+  </div>
+  {% if user.role == 'Doctor' %}
+  <div class="card stat">
+    <span class="label">Assigned to you</span>
+    <span class="value">{{ summary.assigned_to_me }}</span>
+    <span class="foot">You are the attending doctor</span>
+  </div>
+  {% endif %}
+  <div class="card stat">
+    <span class="label">Unassigned intakes</span>
+    <span class="value">{{ summary.unassigned }}</span>
+    <span class="foot">Waiting for a doctor to pick up</span>
+  </div>
+</section>
+{% endif %}
+
+{% if admin %}
+<section class="stats" aria-label="Accounts">
+  <div class="card stat">
+    <span class="label">Active accounts</span>
+    <span class="value">{{ admin.active_users }}</span>
+    <span class="foot">{{ admin.disabled_users }} disabled</span>
+  </div>
+  <div class="card stat">
+    <span class="label">Without two-factor</span>
+    <span class="value">{{ admin.without_mfa }}</span>
+    <span class="foot">Active accounts using a password only</span>
+  </div>
+  <div class="card stat">
+    <span class="label">Flagged events · 24 h</span>
+    <span class="value">{{ admin.flagged_24h }}</span>
+    <span class="foot">Failed sign-ins, denials and alerts</span>
+  </div>
+</section>
+{% endif %}
+
+<div class="columns">
+  <div>
+    {% if summary and user.role == 'Doctor' %}
+    <section class="card" aria-labelledby="your-patients">
+      <div class="card-header"><h2 id="your-patients" class="t-card">Your patients</h2><span class="meta">Recently updated</span></div>
+      {% if summary.my_recent %}
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>MRN</th><th>Age band</th><th>Gender</th><th>Last updated</th><th class="end"><span class="visually-hidden">Actions</span></th></tr></thead>
+          <tbody>
+            {% for p in summary.my_recent %}
+            <tr>
+              <td class="mono">{{ p.patient_id }}</td>
+              <td class="muted">{{ p.age_band or '—' }}</td>
+              <td class="muted">{{ p.gender or '—' }}</td>
+              <td class="muted nowrap">{{ ui.when(p.updated_at) }}</td>
+              <td class="end"><a href="{{ url_for('patient.detail_patient', record_id=p.id) }}">View</a></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state"><p>No patients are assigned to you yet. Unassigned intakes can be picked up from the patient list.</p></div>
+      {% endif %}
+    </section>
+    {% elif summary %}
+    <section class="card" aria-labelledby="next-steps">
+      <div class="card-header"><h2 id="next-steps" class="t-card">Patient intake</h2></div>
+      <div class="card-body stack">
+        <p class="muted">Register new patients and assign an attending doctor. Unassigned intakes can be picked up by any doctor in the clinic.</p>
+        <div class="actions">
+          <a class="btn btn-primary" href="{{ url_for('patient.create_patient') }}">Register patient</a>
+          <a class="btn btn-secondary" href="{{ url_for('patient.list_patients') }}">View patients</a>
+        </div>
+      </div>
+    </section>
+    {% elif admin %}
+    <section class="card" aria-labelledby="flagged">
+      <div class="card-header"><h2 id="flagged" class="t-card">Recent flagged events</h2><a class="t-small" href="{{ url_for('admin.view_audit_log') }}">Open audit log</a></div>
+      {% if admin.recent_flagged %}
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Time</th><th>Event</th><th>User</th><th>Status</th></tr></thead>
+          <tbody>
+            {% for log in admin.recent_flagged %}
+            <tr>
+              <td class="muted nowrap">{{ ui.when(log.timestamp) }}</td>
+              <td class="mono">{{ log.action }}</td>
+              <td>{{ log.username or '—' }}</td>
+              <td>{{ ui.badge(log.status | title, 'danger' if log.status == 'ALERT' else 'warning') }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state"><p>No failed sign-ins, access denials or alerts recorded.</p></div>
+      {% endif %}
+    </section>
+    {% endif %}
+  </div>
+
+  <aside class="rail">
+    <section class="card" aria-labelledby="account-security">
+      <div class="card-header"><h2 id="account-security" class="t-card">Account security</h2></div>
+      <div class="card-body stack">
+        <div class="row-between">
+          <strong>Two-factor authentication</strong>
+          {{ ui.badge('On', 'success') if user.totp_enabled else ui.badge('Off', 'warning') }}
+        </div>
+        {% if not user.totp_enabled %}
+        <p class="t-small muted">Protect your account with an authenticator app code at sign-in.{% if user.role == 'Admin' %} Required for administrators.{% endif %}</p>
+        <div><a class="btn btn-secondary" href="{{ url_for('admin.setup_mfa') }}">Set up two-factor</a></div>
+        {% endif %}
+        <p class="t-small subtle">Signed in: {{ ui.when(user.last_login_at) }}</p>
+      </div>
+    </section>
+  </aside>
+</div>
+{% endblock %}

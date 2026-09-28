@@ -1,0 +1,120 @@
+{% extends "layouts/app.html" %}
+{% block title %}{{ patient.patient_id }}{% endblock %}
+{% block breadcrumb %}
+<a href="{{ url_for('patient.list_patients') }}">Patients</a><span class="sep">/</span><span aria-current="page" class="mono">{{ patient.patient_id }}</span>
+{% endblock %}
+
+{% block content %}
+{% if tamper_error %}
+<div class="callout callout-danger" role="alert">
+  {{ ui.icon('x-circle') }}
+  <div class="callout-body">
+    <strong>This record failed its integrity check</strong>
+    <p>The stored data for {{ patient.patient_id }} does not match its authentication tag, so it has not been displayed. The security team has been alerted and the event is in the audit log. Do not re-enter data from this record until it has been investigated.</p>
+    <p class="mono">{{ tamper_error }}</p>
+  </div>
+</div>
+<div><a class="btn btn-secondary" href="{{ url_for('patient.list_patients') }}">Back to patients</a></div>
+{% else %}
+
+<div class="page-header">
+  <div class="heading">
+    <div class="title-row">
+      <h1 class="t-page">{{ patient.name }}</h1>
+      {{ ui.badge('Integrity verified', 'success') }}
+    </div>
+    <p class="subtitle"><span class="mono">{{ patient.patient_id }}</span> · {{ patient.age_band or '—' }} · {{ patient.gender or '—' }} · Attending: {{ patient.assigned_doctor_name or 'unassigned' }}</p>
+  </div>
+  {% if (can_update and not needs_break_glass) or can_delete %}
+  <div class="actions">
+    {% if can_update and not needs_break_glass %}<a class="btn btn-secondary" href="{{ url_for('patient.edit_patient', record_id=patient.id) }}">Edit record</a>{% endif %}
+    {% if can_delete %}
+    <form action="{{ url_for('patient.delete_patient', record_id=patient.id) }}" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn btn-danger" data-confirm="Archive {{ patient.patient_id }}? It will be removed from the patient list but kept for records retention.">Archive</button>
+    </form>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+{% if needs_break_glass %}
+<div class="callout callout-warning">
+  {{ ui.icon('alert') }}
+  <div class="callout-body">
+    <strong>Assigned to {{ patient.assigned_doctor_name or 'another doctor' }}</strong>
+    <p>You can view this record. Editing it requires an emergency access declaration, which is recorded in the audit log and alerts the security team (limit: 5 per hour).</p>
+    <form action="{{ url_for('patient.edit_patient', record_id=patient.id) }}" method="GET">
+      <label class="visually-hidden" for="break_glass_reason">Reason for emergency access</label>
+      <select class="select" id="break_glass_reason" name="break_glass_reason" required>
+        <option value="" selected disabled>Select a reason…</option>
+        {% for code, label in break_glass_reasons.items() %}<option value="{{ code }}">{{ label }}</option>{% endfor %}
+      </select>
+      <button type="submit" class="btn btn-secondary" data-confirm="Declare emergency access? This is recorded in the audit log and alerts the security team.">Declare and edit</button>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<div class="columns">
+  <section class="card" aria-labelledby="summary">
+    <div class="card-header">
+      <h2 id="summary" class="t-card">Clinical summary</h2>
+      <span class="meta">Version {{ patient.version_id }} · updated {{ ui.when(patient.updated_at) }}</span>
+    </div>
+    <div class="card-body stack">
+      <div class="record-field">
+        <span class="label">Diagnosis</span>
+        {% if patient.diagnosis %}<span class="value lead">{{ patient.diagnosis }}</span>{% else %}<span class="value empty">Not recorded</span>{% endif %}
+      </div>
+      <div class="record-field">
+        <span class="label">Medical history</span>
+        {% if patient.medical_history %}<span class="value">{{ patient.medical_history }}</span>{% else %}<span class="value empty">Not recorded</span>{% endif %}
+      </div>
+      <div class="record-field">
+        <span class="label">Clinical notes</span>
+        {% if patient.notes %}<span class="value">{{ patient.notes }}</span>{% else %}<span class="value empty">Not recorded</span>{% endif %}
+      </div>
+    </div>
+  </section>
+
+  <aside class="rail">
+    <section class="card" aria-labelledby="details">
+      <div class="card-header"><h2 id="details" class="t-card">Record details</h2></div>
+      <dl class="kv">
+        <div><dt>MRN</dt><dd class="mono">{{ patient.patient_id }}</dd></div>
+        <div><dt>Registered</dt><dd>{{ ui.when(patient.created_at) }}</dd></div>
+        <div><dt>Registered by</dt><dd>{{ patient.created_by_name or '—' }}</dd></div>
+        <div><dt>Last updated</dt><dd>{{ ui.when(patient.updated_at) }}</dd></div>
+        <div><dt>Encryption</dt><dd>AES-256-GCM · key v{{ patient.key_version }}</dd></div>
+        <div><dt>Integrity</dt><dd>{{ ui.badge('Verified', 'success') }}</dd></div>
+      </dl>
+    </section>
+    <section class="card" aria-labelledby="access">
+      <div class="card-header"><h2 id="access" class="t-card">Your access</h2></div>
+      <div class="card-body">
+        <p class="t-small muted">
+          {% if patient.assigned_doctor_id == current_user.id %}You are the attending doctor. Every view and edit is recorded in the audit log.
+          {% elif needs_break_glass %}You can view this record. Edits require emergency access because another doctor is assigned.
+          {% elif can_update %}No attending doctor is assigned, so any doctor in the clinic can update this record. Every view and edit is recorded.
+          {% else %}You can view this record. Every view is recorded in the audit log.{% endif %}
+        </p>
+      </div>
+    </section>
+    {% if tamper_demo_enabled %}
+    <section class="card" aria-labelledby="tamper">
+      <div class="card-header"><h2 id="tamper" class="t-card">Tamper simulation</h2>{{ ui.badge('Development', 'warning') }}</div>
+      <div class="card-body stack">
+        <p class="t-small muted">Corrupt the stored ciphertext or authentication tag to demonstrate that tampering is detected on the next read. Not available in production.</p>
+        <form action="{{ url_for('patient.tamper_demo', record_id=patient.id) }}" method="POST" class="actions">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" name="tamper_type" value="ciphertext" class="btn btn-danger btn-sm" data-confirm="Corrupt this record's ciphertext?">Corrupt ciphertext</button>
+          <button type="submit" name="tamper_type" value="tag" class="btn btn-danger btn-sm" data-confirm="Corrupt this record's authentication tag?">Corrupt tag</button>
+        </form>
+      </div>
+    </section>
+    {% endif %}
+  </aside>
+</div>
+{% endif %}
+{% endblock %}

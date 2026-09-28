@@ -1,0 +1,51 @@
+# Schema migration Job. Run (and wait for completion) before rolling out a new web/worker image:
+#   kubectl -n clinical-security delete job arogya-migrate --ignore-not-found
+#   kubectl -n clinical-security apply -f deploy/k8s/migrate-job.yaml
+#   kubectl -n clinical-security wait --for=condition=complete job/arogya-migrate --timeout=300s
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: arogya-migrate
+  namespace: clinical-security
+  labels:
+    app.kubernetes.io/name: arogyaraksha
+    app.kubernetes.io/component: migrate
+    app.kubernetes.io/part-of: arogyaraksha-cns
+spec:
+  backoffLimit: 2
+  ttlSecondsAfterFinished: 3600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: arogyaraksha
+        app.kubernetes.io/component: migrate
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: migrate
+          image: arogyaraksha:latest
+          imagePullPolicy: IfNotPresent
+          command: ["flask", "init-db"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          envFrom:
+            - configMapRef:
+                name: arogya-config
+            - secretRef:
+                name: arogya-secrets
+          volumeMounts:
+            - name: tmp-volume
+              mountPath: /tmp
+      volumes:
+        - name: tmp-volume
+          emptyDir: {}

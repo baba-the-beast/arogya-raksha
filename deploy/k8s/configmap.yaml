@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: arogya-config
+  namespace: clinical-security
+  labels:
+    app.kubernetes.io/name: arogyaraksha
+    app.kubernetes.io/part-of: arogyaraksha-cns
+data:
+  FLASK_ENV: "production"
+  CURRENT_KEY_VERSION: "1"
+  RATELIMIT_DEFAULT: "120 per minute"
+  RATELIMIT_STORAGE_URI: "redis://arogya-redis.clinical-security.svc.cluster.local:6379/0"
+  # Required in production: create_app() fails closed without a distributed session store
+  REDIS_URL: "redis://arogya-redis.clinical-security.svc.cluster.local:6379/0"
+  SESSION_REDIS_URL: "redis://arogya-redis.clinical-security.svc.cluster.local:6379/1"
+  APP_BASE_URL: "https://arogya.hospital.internal"
+  FLASK_APP: "app:create_app()"
+  FORCE_HTTPS: "True"
+  MFA_ENFORCE_ADMIN: "True"
+  SESSION_LIFETIME_MINUTES: "30"
+  TRUSTED_PROXY_IPS: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+  DB_POOL_SIZE: "15"
+  DB_MAX_OVERFLOW: "30"
+  DB_POOL_RECYCLE: "300"
