@@ -28,7 +28,10 @@
       {% if has_permission(current_user.role, 'USER_MANAGE') or has_permission(current_user.role, 'AUDIT_READ') %}
       <div class="nav-section">Administration</div>
       {% if has_permission(current_user.role, 'USER_MANAGE') %}{{ nav('admin.manage_users', 'Users', 'patients') }}{% endif %}
-      {% if has_permission(current_user.role, 'AUDIT_READ') %}{{ nav('admin.view_audit_log', 'Audit log', 'list') }}{% endif %}
+      {% if has_permission(current_user.role, 'AUDIT_READ') %}
+      {{ nav('admin.security_center', 'Security center', 'shield') }}
+      {{ nav('admin.view_audit_log', 'Audit log', 'list') }}
+      {% endif %}
       {% endif %}
     </nav>
     <div class="sidebar-spacer"></div>

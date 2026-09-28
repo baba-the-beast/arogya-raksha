@@ -265,7 +265,8 @@ class PatientService:
                     "patient_id": patient.patient_id,
                     "record_id": patient.id,
                     "tenant_id": tenant_id
-                }
+                },
+                tenant_id=tenant_id,
             )
 
             AuditService.log_event(
@@ -400,7 +401,8 @@ class PatientService:
                 "patient_id": patient.patient_id,
                 "tenant_id": patient.tenant_id,
                 "created_by": created_by_user_id
-            }
+            },
+            tenant_id=patient.tenant_id,
         )
 
         AuditService.log_event(
@@ -512,7 +514,8 @@ class PatientService:
                 "version_id": patient.version_id,
                 "tenant_id": tenant_id,
                 "updated_by": updated_by_user_id
-            }
+            },
+            tenant_id=tenant_id,
         )
 
         AuditService.log_event(
@@ -544,6 +547,7 @@ class PatientService:
             event_type="PATIENT_DELETE",
             payload={"patient_id": patient.patient_id, "record_id": patient.id,
                      "tenant_id": tenant_id, "deleted_by": user_id},
+            tenant_id=tenant_id,
         )
         AuditService.log_event(
             action="PATIENT_DELETE",

@@ -289,7 +289,8 @@ class AuthService:
                 "token_hash": token_hash,
                 "sealed_token": sealed,
                 "expires_at": expires_at.isoformat()
-            }
+            },
+            tenant_id=user.tenant_id,
         )
 
         AuditService.log_event(

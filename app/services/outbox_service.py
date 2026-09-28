@@ -22,18 +22,31 @@ class OutboxService:
         event_type: str,
         payload: dict[str, Any],
         idempotency_key: str | None = None,
-        max_retries: int = 5
+        max_retries: int = 5,
+        tenant_id: str | None = None,
     ) -> OutboxEvent:
         """
         Saves an outbox event within the current database transaction.
         Must be committed by the calling transaction to ensure atomicity.
         """
+        if tenant_id is None:
+            # Tenant identity is accepted only from the authenticated server-side session,
+            # never from event payloads controlled by a client.
+            try:
+                from flask import has_request_context, session
+                if has_request_context():
+                    tenant_id = session.get("tenant_id")
+            except RuntimeError:
+                tenant_id = None
+        tenant_id = tenant_id or "tenant-default"
+
         if idempotency_key:
             existing = OutboxEvent.query.filter_by(idempotency_key=idempotency_key).first()
             if existing:
                 return existing
 
         event = OutboxEvent(
+            tenant_id=tenant_id,
             event_type=event_type,
             payload_json=json.dumps(payload, default=str),
             status="PENDING",

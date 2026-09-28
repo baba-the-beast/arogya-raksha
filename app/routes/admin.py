@@ -115,6 +115,16 @@ def confirm_mfa():
         flash("Invalid verification code. Please check your authenticator and try again.", "danger")
         return redirect(url_for("admin.setup_mfa"))
 
+@admin_bp.route("/security", methods=["GET"])
+@require_permission(AUDIT_READ)
+def security_center():
+    """Tenant-scoped security posture backed by authoritative operational records."""
+    user = get_current_user()
+    from app.services.security_center_service import SecurityCenterService
+    posture = SecurityCenterService.get_posture(user.tenant_id)
+    return render_template("admin/security_center.html", user=user, posture=posture)
+
+
 @admin_bp.route("/audit", methods=["GET"])
 @require_permission(AUDIT_READ)
 def view_audit_log():

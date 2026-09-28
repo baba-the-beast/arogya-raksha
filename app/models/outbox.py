@@ -14,6 +14,9 @@ class OutboxEvent(db.Model):
     __tablename__ = "outbox_events"
 
     id = db.Column(db.Integer, primary_key=True)
+    # Operational events are tenant-scoped just like the mutation that produced them.
+    # This prevents cross-organization queue health and failure details from leaking.
+    tenant_id = db.Column(db.String(32), db.ForeignKey("tenants.id"), nullable=False, default="tenant-default", index=True)
     event_type = db.Column(db.String(64), nullable=False, index=True)
     payload_json = db.Column(db.Text, nullable=False)
     status = db.Column(db.String(32), default="PENDING", nullable=False, index=True)  # PENDING, PROCESSED, FAILED, DEAD_LETTER

@@ -1,0 +1,99 @@
+{% extends "layouts/app.html" %}
+{% block title %}Security center{% endblock %}
+{% block breadcrumb %}<span>Administration</span><span class="sep">/</span><span aria-current="page">Security center</span>{% endblock %}
+
+{% macro health(label, ok, detail) -%}
+<div class="health-row">
+  <span class="health-indicator {{ 'is-healthy' if ok else 'is-attention' }}" aria-hidden="true"></span>
+  <span><strong>{{ label }}</strong><small>{{ detail }}</small></span>
+  {{ ui.badge('Operational' if ok else 'Attention', 'success' if ok else 'warning') }}
+</div>
+{%- endmacro %}
+
+{% macro event_status(status) -%}
+{% if status == 'ALERT' %}{{ ui.badge('Alert', 'danger') }}
+{% elif status in ('FAILURE', 'DENIED', 'BLOCKED') %}{{ ui.badge(status | title, 'warning') }}
+{% else %}{{ ui.badge(status | title, 'info') }}{% endif %}
+{%- endmacro %}
+
+{% block content %}
+<div class="security-page-head status-{{ posture.overall }}">
+  <div class="security-page-icon">{{ ui.icon('shield') }}</div>
+  <div class="heading">
+    <span class="eyebrow">LIVE SECURITY POSTURE</span>
+    <h1 class="t-page">{% if posture.overall == 'protected' %}Systems protected{% elif posture.overall == 'critical' %}Immediate review required{% else %}Security attention required{% endif %}</h1>
+    <p>{{ current_user.tenant.name if current_user.tenant else 'This organization' }} · Updated {{ ui.when(posture.generated_at) }} UTC</p>
+  </div>
+  <a class="btn btn-secondary" href="{{ url_for('admin.security_center') }}">Refresh status</a>
+</div>
+
+<section class="security-metrics" aria-label="Security summary">
+  <article class="card security-metric">
+    <div class="metric-top"><span>Authentication</span>{{ ui.icon('lock') }}</div>
+    <strong>{{ posture.authentication.failures }}</strong>
+    <p>failed authentication events in {{ posture.window_hours }} hours</p>
+    <span class="metric-foot">{{ posture.authentication.denials }} blocked or denied</span>
+  </article>
+  <article class="card security-metric">
+    <div class="metric-top"><span>MFA coverage</span>{{ ui.icon('check-circle') }}</div>
+    <strong>{{ posture.mfa.coverage }}%</strong>
+    <p>{{ posture.mfa.enabled }} of {{ posture.mfa.eligible }} active accounts protected</p>
+    <a class="metric-foot" href="{{ url_for('admin.manage_users') }}">Review accounts</a>
+  </article>
+  <article class="card security-metric">
+    <div class="metric-top"><span>Security events</span>{{ ui.icon('alert') }}</div>
+    <strong>{{ posture.events.flagged }}</strong>
+    <p>flagged events in {{ posture.window_hours }} hours</p>
+    <span class="metric-foot">{{ posture.events.emergency }} emergency access events</span>
+  </article>
+  <article class="card security-metric">
+    <div class="metric-top"><span>Alert delivery</span>{{ ui.icon('list') }}</div>
+    <strong>{{ posture.outbox.pending }}</strong>
+    <p>queued or currently processing</p>
+    <span class="metric-foot {{ 'danger-text' if posture.outbox.dead_letter else '' }}">{{ posture.outbox.failed }} retrying · {{ posture.outbox.dead_letter }} dead-letter</span>
+  </article>
+</section>
+
+<div class="security-grid">
+  <section class="card" aria-labelledby="controls-title">
+    <div class="card-header"><div><h2 id="controls-title" class="t-card">Security controls</h2><span class="meta">Authoritative runtime state</span></div></div>
+    <div class="health-list">
+      {{ health('Audit integrity', posture.audit.valid, (posture.audit.total ~ ' chained events verified') if posture.audit.valid else ('Chain broken at event ' ~ posture.audit.broken_id)) }}
+      {{ health('Session service', posture.sessions.available, posture.sessions.backend ~ ' · ' ~ posture.sessions.idle_minutes ~ ' min idle timeout') }}
+      {{ health('Alert delivery', posture.outbox.failed == 0 and posture.outbox.dead_letter == 0, posture.outbox.processed ~ ' delivered · ' ~ posture.outbox.pending ~ ' pending') }}
+      {{ health('Current authentication', posture.sessions.mfa_verified, 'MFA verified for this session' if posture.sessions.mfa_verified else 'Password-authenticated session') }}
+    </div>
+    {% if not posture.audit.valid %}
+    <div class="card-body"><div class="callout callout-danger" role="alert">{{ ui.icon('x-circle') }}<div class="callout-body"><strong>Audit integrity verification failed</strong><p>Preserve the database and begin the audit-integrity incident runbook. Do not modify affected events.</p>{% for error in posture.audit.errors %}<p class="mono">{{ error }}</p>{% endfor %}</div></div></div>
+    {% endif %}
+  </section>
+
+  <aside class="card security-policy" aria-labelledby="policy-title">
+    <div class="card-header"><h2 id="policy-title" class="t-card">Session policy</h2></div>
+    <dl class="kv">
+      <div><dt>Storage</dt><dd>{{ posture.sessions.backend }}</dd></div>
+      <div><dt>Idle lock</dt><dd>{{ posture.sessions.idle_minutes }} minutes</dd></div>
+      <div><dt>Maximum duration</dt><dd>{{ posture.sessions.absolute_hours }} hours</dd></div>
+      <div><dt>This session</dt><dd>{{ ui.badge('MFA verified', 'success') if posture.sessions.mfa_verified else ui.badge('Password verified', 'info') }}</dd></div>
+    </dl>
+  </aside>
+</div>
+
+<section class="card" aria-labelledby="events-title">
+  <div class="card-header"><div><h2 id="events-title" class="t-card">Recent security events</h2><span class="meta">Tenant-scoped · last {{ posture.window_hours }} hours</span></div><a href="{{ url_for('admin.view_audit_log') }}">Open audit explorer</a></div>
+  {% if posture.events.recent %}
+  <div class="event-list">
+    {% for event in posture.events.recent %}
+    <article class="security-event">
+      <div class="event-mark event-{{ event.status | lower }}">{{ ui.icon('alert' if event.status != 'SUCCESS' else 'check') }}</div>
+      <div class="event-main"><div><strong class="mono">{{ event.action }}</strong>{{ event_status(event.status) }}</div><p>{{ event.details or 'Security event recorded.' }}</p><span>{{ event.username or 'System' }} · {{ event.resource_type or 'Security' }}{% if event.resource_id %} <span class="mono">{{ event.resource_id }}</span>{% endif %}</span></div>
+      <time datetime="{{ event.timestamp.isoformat() if event.timestamp else '' }}">{{ ui.when(event.timestamp) }}</time>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">{{ ui.icon('check-circle') }}<strong>No flagged events</strong><p>No failed authentication, access denial, blocked request, or security alert was recorded in the last {{ posture.window_hours }} hours.</p></div>
+  {% endif %}
+</section>
+<p class="footnote">Security Center displays operational metadata only. It does not expose secrets, session identifiers, event payloads, or patient information. Audit integrity is verified across the platform-wide append-only chain; event views are restricted to your organization.</p>
+{% endblock %}
